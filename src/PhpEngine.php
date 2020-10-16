@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace R2\Templating;
 
 class PhpEngine

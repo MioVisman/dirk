@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace R2\Templating;
 
 use R2\Templating\PhpEngine;
@@ -16,7 +18,7 @@ class Dirk extends PhpEngine
             [
                 'ext'   => '.blade.php',
                 'cache' => '.',
-                'echo'  => 'htmlspecialchars(%s, ENT_QUOTES, \'UTF-8\')',
+                'echo'  => 'htmlspecialchars((string) %s, ENT_QUOTES, \'UTF-8\')',
             ],
             $config
         );

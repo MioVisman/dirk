@@ -71,7 +71,7 @@ class Dirk extends PhpEngine
             '/[ \t]*+\B@(\w+)(?: [ \t]*( \( ( (?>[^()]+) | (?2) )* \) ) )?/x',
             function($match) {
                 if (\method_exists($this, $method = 'compile' . \ucfirst($match[1]))) {
-                    return isset($match[2]) ? $this->$method($match[2]) : $this->$method('');
+                    return $this->$method($match[2] ?? '');
                 } else {
                     return $match[0];
                 }

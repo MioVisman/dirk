@@ -36,14 +36,16 @@ class PhpEngine
      * @param mixed $name     template name or array of names
      * @param mixed $composer data in the same meaning as for fetch() call, or callable returning such data
      */
-    public function composer($name, $composer)
+    public function composer($name, $composer): void
     {
         if (\is_array($name)) {
             foreach ($name as $n) {
                 $this->composer($n, $composer);
             }
         } else {
-            $p = '~^'.str_replace('\*', '[^'.$this->separator.']+', \preg_quote($name, $this->separator.'~')).'$~';
+            $p = '~^'
+                . \str_replace('\*', '[^' . $this->separator . ']+', \preg_quote($name, $this->separator . '~'))
+                . '$~';
             $this->composers[$p][] = $composer;
         }
     }
@@ -53,13 +55,13 @@ class PhpEngine
      * @param  string $name
      * @return string
      */
-    protected function prepare($name)
+    protected function prepare(string $name): string
     {
         if ('/' !== $this->separator) {
             $name = \str_replace($this->separator, '/', $name);
         }
 
-        return $this->views.'/'.$name.$this->ext;
+        return $this->views . '/' . $name . $this->ext;
     }
 
 
@@ -68,7 +70,7 @@ class PhpEngine
      * @param string $name
      * @param array  $data
      */
-    public function render($name, array $data = [])
+    public function render(string $name, array $data = []): string
     {
         echo $this->fetch($name, $data);
     }
@@ -79,7 +81,7 @@ class PhpEngine
      * @param  array  $data
      * @return string
      */
-    public function fetch($name, array $data = [])
+    public function fetch(string $name, array $data = []): string
     {
         $this->templates[] = $name;
 
@@ -109,9 +111,9 @@ class PhpEngine
     /**
      * Is template file exists?
      * @param  string  $name
-     * @return Boolean
+     * @return bool
      */
-    public function exists($name)
+    public function exists(string $name): bool
     {
         return \file_exists($this->prepare($name));
     }
@@ -120,7 +122,7 @@ class PhpEngine
      * Define parent
      * @param string $name
      */
-    protected function extend($name)
+    protected function extend(string $name): void
     {
         $this->templates[] = $name;
     }
@@ -131,7 +133,7 @@ class PhpEngine
      * @param  string $default
      * @return string
      */
-    protected function block($name, $default = '')
+    protected function block(string $name, string $default = ''): string
     {
         return \array_key_exists($name, $this->blocks)
             ? $this->blocks[$name]
@@ -142,7 +144,7 @@ class PhpEngine
      * Block begins
      * @param string $name
      */
-    protected function beginBlock($name)
+    protected function beginBlock(string $name): void
     {
         \array_push($this->blockStack, $name);
         \ob_start();
@@ -153,7 +155,7 @@ class PhpEngine
      * @param boolean $overwrite
      * @return string
      */
-    protected function endBlock($overwrite = false)
+    protected function endBlock(bool $overwrite = false): string
     {
         $name = \array_pop($this->blockStack);
 

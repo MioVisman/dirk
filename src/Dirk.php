@@ -151,7 +151,15 @@ class Dirk extends PhpEngine
      */
     protected function compileIf($expression)
     {
-        return "<?php if{$expression}: ?>";
+        if (\preg_match('%^\(\s*(\!\s*)?(\$[\w>-]+\[(?:[\'"]\w+[\'"]|\d+)\])\s*\)$%', $expression, $matches)) {
+            if (empty($matches[1])) {
+                return "<?php if(! empty{$expression}): ?>";
+            } else {
+                return "<?php if(empty({$matches[2]})): ?>";
+            }
+        } else {
+            return "<?php if{$expression}: ?>";
+        }
     }
 
     /**

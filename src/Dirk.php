@@ -59,13 +59,14 @@ class Dirk extends PhpEngine
      */
     protected function compileStatements($value)
     {
-        return preg_replace_callback(
-            '/\B@(\w+)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?/x',
+        return \preg_replace_callback(
+            '/[ \t]*+\B@(\w+)(?: [ \t]*( \( ( (?>[^()]+) | (?2) )* \) ) )?/x',
             function($match) {
-                if (method_exists($this, $method = 'compile' . ucfirst($match[1]))) {
-                    $match[0] = $this->$method(isset($match[3]) ? $match[3] : '');
+                if (\method_exists($this, $method = 'compile' . \ucfirst($match[1]))) {
+                    return isset($match[2]) ? $this->$method($match[2]) : $this->$method('');
+                } else {
+                    return $match[0];
                 }
-                return isset($match[3]) ? $match[0] : $match[0] . $match[2];
             },
             $value
         );

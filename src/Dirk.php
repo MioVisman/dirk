@@ -63,12 +63,12 @@ class Dirk extends PhpEngine
      * Compile Statements that start with "@"
      *
      * @param  string  $value
-     * @return mixed
+     * @return string
      */
     protected function compileStatements(string $value): string
     {
         return \preg_replace_callback(
-            '/[ \t]*+\B@(\w+)(?: [ \t]*( \( ( (?>[^()]+) | (?2) )* \) ) )?/x',
+            '%[ \t]*+\B@(\w+)(?: [ \t]*( \( ( (?>[^()]+) | (?2) )* \) ) )?%x',
             function($match) {
                 if (\method_exists($this, $method = 'compile' . \ucfirst($match[1]))) {
                     return $this->$method($match[2] ?? '');
@@ -88,7 +88,7 @@ class Dirk extends PhpEngine
      */
     protected function compileComments(string $value): string
     {
-        return \preg_replace('/\{\{--(.*?)--\}\}/s', '<?php /*$1*/ ?>', $value);
+        return \preg_replace('%\{\{--(.*?)--\}\}%s', '<?php /*$1*/ ?>', $value);
     }
 
     /**
@@ -101,13 +101,13 @@ class Dirk extends PhpEngine
     {
         // compile escaped echoes
         $value = \preg_replace_callback(
-            '/\{\{\{\s*(.+?)\s*\}\}\}(\r?\n)?/s',
+            '%\{\{\{\s*(.+?)\s*\}\}\}(\r?\n)?%s',
             function($matches) {
                 $whitespace = empty($matches[2]) ? '' : $matches[2] . $matches[2];
 
-                return '<?= htmlspecialchars('
+                return '<?= \\htmlspecialchars('
                     . $this->compileEchoDefaults($matches[1])
-                    . ', ENT_QUOTES, \'UTF-8\') ?>'
+                    . ', \\ENT_QUOTES, \'UTF-8\') ?>'
                     . $whitespace;
             },
             $value
@@ -115,18 +115,21 @@ class Dirk extends PhpEngine
 
         // compile not escaped echoes
         $value = \preg_replace_callback(
-            '/\{\!!\s*(.+?)\s*!!\}(\r?\n)?/s',
+            '%\{\!!\s*(.+?)\s*!!\}(\r?\n)?%s',
             function($matches) {
                 $whitespace = empty($matches[2]) ? '' : $matches[2] . $matches[2];
 
-                return '<?= '.$this->compileEchoDefaults($matches[1]).' ?>'.$whitespace;
+                return '<?= '
+                    . $this->compileEchoDefaults($matches[1])
+                    . ' ?>'
+                    . $whitespace;
             },
             $value
         );
 
         // compile regular echoes
         $value = \preg_replace_callback(
-            '/(@)?\{\{\s*(.+?)\s*\}\}(\r?\n)?/s',
+            '%(@)?\{\{\s*(.+?)\s*\}\}(\r?\n)?%s',
             function($matches) {
                 $whitespace = empty($matches[3]) ? '' : $matches[3] . $matches[3];
 
@@ -150,7 +153,7 @@ class Dirk extends PhpEngine
      */
     public function compileEchoDefaults(string $value): string
     {
-        return \preg_replace('/^(?=\$)(.+?)(?:\s+or\s+)(.+?)$/s', '($1 ?? $2)', $value);
+        return \preg_replace('%^(?=\$)(.+?)(?:\s+or\s+)(.+?)$%s', '($1 ?? $2)', $value);
     }
 
     /**
@@ -186,10 +189,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the else statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileElse(string $expression): string
+    protected function compileElse(): string
     {
         return "<?php else: ?>";
     }
@@ -197,10 +199,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the end-if statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileEndif(string $expression): string
+    protected function compileEndif(): string
     {
         return "<?php endif; ?>";
     }
@@ -219,10 +220,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the end unless statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileEndunless(string $expression): string
+    protected function compileEndunless(): string
     {
         return "<?php endif; ?>";
     }
@@ -241,10 +241,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the end-for statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileEndfor(string $expression): string
+    protected function compileEndfor(): string
     {
         return "<?php endfor; ?>";
     }
@@ -263,10 +262,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the end-for-each statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileEndforeach(string $expression): string
+    protected function compileEndforeach(): string
     {
         return "<?php endforeach; ?>";
     }
@@ -324,10 +322,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the end-while statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileEndwhile(string $expression): string
+    protected function compileEndwhile(): string
     {
         return "<?php endwhile; ?>";
     }
@@ -393,10 +390,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the end-section statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileEndsection(string $expression): string
+    protected function compileEndsection(): string
     {
         return "<?php \$this->endBlock() ?>";
     }
@@ -404,10 +400,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the show statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileShow(string $expression): string
+    protected function compileShow(): string
     {
         return "<?= \$this->block(\$this->endBlock()) ?>";
     }
@@ -415,10 +410,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the append statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileAppend(string $expression): string
+    protected function compileAppend(): string
     {
         return "<?php \$this->endBlock() ?>";
     }
@@ -426,10 +420,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the stop statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileStop(string $expression): string
+    protected function compileStop(): string
     {
         return "<?php \$this->endBlock() ?>";
     }
@@ -437,10 +430,9 @@ class Dirk extends PhpEngine
     /**
      * Compile the overwrite statements
      *
-     * @param  string  $expression
      * @return string
      */
-    protected function compileOverwrite(string $expression): string
+    protected function compileOverwrite(): string
     {
         return "<?php \$this->endBlock(true) ?>";
     }

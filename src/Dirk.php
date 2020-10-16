@@ -139,7 +139,7 @@ class Dirk extends PhpEngine
      */
     public function compileEchoDefaults($value)
     {
-        return preg_replace('/^(?=\$)(.+?)(?:\s+or\s+)(.+?)$/s', 'isset($1) ? $1 : $2', $value);
+        return preg_replace('/^(?=\$)(.+?)(?:\s+or\s+)(.+?)$/s', '(isset($1) ? $1 : $2)', $value);
     }
 
     /**

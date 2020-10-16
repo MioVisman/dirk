@@ -14,7 +14,7 @@ class Dirk extends PhpEngine
 
     public function __construct(array $config = [])
     {
-        $config = array_replace_recursive(
+        $config = \array_replace_recursive(
             [
                 'ext'   => '.blade.php',
                 'cache' => '.',
@@ -22,8 +22,8 @@ class Dirk extends PhpEngine
             ],
             $config
         );
-        $this->cache      = isset($config['cache']) ? $config['cache'] : '.';
-        $this->echoFormat = isset($config['echo'])  ? $config['echo']  : '%s';
+        $this->cache      = $config['cache'] ?? '.';
+        $this->echoFormat = $config['echo']  ?? '%s';
         parent::__construct($config);
     }
 
@@ -40,16 +40,22 @@ class Dirk extends PhpEngine
      */
     protected function prepare($name)
     {
-        $name = str_replace('.', '/', $name);
-        $tpl = $this->views . '/' . $name . $this->ext;
-        $php = $this->cache . '/' . md5($name) . '.php';
-        if (!file_exists($php) || filemtime($tpl) > filemtime($php)) {
-            $text = file_get_contents($tpl);
+        $name = \str_replace('.', '/', $name);
+        $tpl  = $this->views . '/' . $name . $this->ext;
+        $php  = $this->cache . '/' . \md5($name) . '.php';
+        if (
+            ! \file_exists($php)
+            || \filemtime($tpl) > \filemtime($php)
+        ) {
+            $text = \file_get_contents($tpl);
+
             foreach ($this->compilers as $type) {
                 $text = $this->{'compile' . $type}($text);
             }
-            file_put_contents($php, $text);
+
+            \file_put_contents($php, $text);
         }
+
         return $php;
     }
 
@@ -84,7 +90,7 @@ class Dirk extends PhpEngine
     {
         $pattern = '/\{\{--((.|\s)*?)--\}\}/';
 
-        return preg_replace($pattern, '<?php /*$1*/ ?>', $value);
+        return \preg_replace($pattern, '<?php /*$1*/ ?>', $value);
     }
 
     /**
@@ -96,38 +102,41 @@ class Dirk extends PhpEngine
     protected function compileEchos($value)
     {
         // compile escaped echoes
-        $value = preg_replace_callback(
+        $value = \preg_replace_callback(
             '/\{\{\{\s*(.+?)\s*\}\}\}(\r?\n)?/s',
             function($matches) {
                 $whitespace = empty($matches[2]) ? '' : $matches[2] . $matches[2];
+
                 return '<?= htmlspecialchars('
-                    .$this->compileEchoDefaults($matches[1])
-                    .', ENT_QUOTES, \'UTF-8\') ?>'
-                    .$whitespace;
+                    . $this->compileEchoDefaults($matches[1])
+                    . ', ENT_QUOTES, \'UTF-8\') ?>'
+                    . $whitespace;
             },
             $value
         );
 
         // compile not escaped echoes
-        $value = preg_replace_callback(
+        $value = \preg_replace_callback(
             '/\{\!!\s*(.+?)\s*!!\}(\r?\n)?/s',
             function($matches) {
                 $whitespace = empty($matches[2]) ? '' : $matches[2] . $matches[2];
+
                 return '<?= '.$this->compileEchoDefaults($matches[1]).' ?>'.$whitespace;
             },
             $value
         );
 
         // compile regular echoes
-        $value = preg_replace_callback(
+        $value = \preg_replace_callback(
             '/(@)?\{\{\s*(.+?)\s*\}\}(\r?\n)?/s',
             function($matches) {
                 $whitespace = empty($matches[3]) ? '' : $matches[3] . $matches[3];
+
                 return $matches[1]
                     ? substr($matches[0], 1)
                     : '<?= '
-                      .sprintf($this->echoFormat, $this->compileEchoDefaults($matches[2]))
-                      .' ?>'.$whitespace;
+                        . sprintf($this->echoFormat, $this->compileEchoDefaults($matches[2]))
+                        . ' ?>' . $whitespace;
             },
             $value
         );
@@ -142,7 +151,7 @@ class Dirk extends PhpEngine
      */
     public function compileEchoDefaults($value)
     {
-        return preg_replace('/^(?=\$)(.+?)(?:\s+or\s+)(.+?)$/s', '(isset($1) ? $1 : $2)', $value);
+        return \preg_replace('/^(?=\$)(.+?)(?:\s+or\s+)(.+?)$/s', '($1 ?? $2)', $value);
     }
 
     /**
@@ -205,7 +214,7 @@ class Dirk extends PhpEngine
      */
     protected function compileUnless($expression)
     {
-        return "<?php if(!$expression): ?>";
+        return "<?php if(! $expression): ?>";
     }
 
     /**
@@ -273,9 +282,10 @@ class Dirk extends PhpEngine
     protected function compileForelse($expression)
     {
         $this->emptyCounter++;
+
         return "<?php \$__empty_{$this->emptyCounter} = true; "
-              ."foreach{$expression}: "
-              ."\$__empty_{$this->emptyCounter} = false;?>";
+              . "foreach{$expression}: "
+              . "\$__empty_{$this->emptyCounter} = false;?>";
     }
 
     /**
@@ -287,6 +297,7 @@ class Dirk extends PhpEngine
     {
         $s = "<?php endforeach; if (\$__empty_{$this->emptyCounter}): ?>";
         $this->emptyCounter--;
+
         return $s;
     }
 
@@ -330,9 +341,13 @@ class Dirk extends PhpEngine
      */
     protected function compileExtends($expression)
     {
-        if (isset($expression[0]) && $expression[0] == '(') {
+        if (
+            isset($expression[0])
+            && $expression[0] == '('
+        ) {
             $expression = substr($expression, 1, -1);
         }
+
         return "<?php \$this->extend({$expression}) ?>";
     }
 
@@ -344,9 +359,13 @@ class Dirk extends PhpEngine
      */
     protected function compileInclude($expression)
     {
-        if (isset($expression[0]) && $expression[0] == '(') {
+        if (
+            isset($expression[0])
+            && $expression[0] == '('
+        ) {
             $expression = substr($expression, 1, -1);
         }
+
         return "<?php include \$this->prepare({$expression}) ?>";
     }
 

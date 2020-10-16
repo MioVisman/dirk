@@ -19,12 +19,13 @@ class PhpEngine
      */
     public function __construct(array $config = [], array $composers = [])
     {
-        $this->views     = isset($config['views'])     ? $config['views']     : '.';
-        $this->ext       = isset($config['ext'])       ? $config['ext']       : '.php';
-        $this->separator = isset($config['separator']) ? $config['separator'] : '/';
-        $this->blocks = [];
+        $this->views      = $config['views']     ?? '.';
+        $this->ext        = $config['ext']       ?? '.php';
+        $this->separator  = $config['separator'] ?? '/';
+        $this->blocks     = [];
         $this->blockStack = [];
-        $this->composers = [];
+        $this->composers  = [];
+
         foreach ($composers as $name => $composer) {
             $this->composer($name, $composer);
         }
@@ -37,12 +38,12 @@ class PhpEngine
      */
     public function composer($name, $composer)
     {
-        if (is_array($name)) {
+        if (\is_array($name)) {
             foreach ($name as $n) {
                 $this->composer($n, $composer);
             }
         } else {
-            $p = '~^'.str_replace('\*', '[^'.$this->separator.']+', preg_quote($name, $this->separator.'~')).'$~';
+            $p = '~^'.str_replace('\*', '[^'.$this->separator.']+', \preg_quote($name, $this->separator.'~')).'$~';
             $this->composers[$p][] = $composer;
         }
     }
@@ -54,9 +55,10 @@ class PhpEngine
      */
     protected function prepare($name)
     {
-        if ($this->separator !== '/') {
-            $name = str_replace($this->separator, '/', $name);
+        if ('/' !== $this->separator) {
+            $name = \str_replace($this->separator, '/', $name);
         }
+
         return $this->views.'/'.$name.$this->ext;
     }
 
@@ -80,21 +82,27 @@ class PhpEngine
     public function fetch($name, array $data = [])
     {
         $this->templates[] = $name;
-        if (!empty($data)) {
-            extract($data);
+
+        if (! empty($data)) {
+            \extract($data);
         }
-        while ($_name = array_shift($this->templates)) {
+
+        while ($_name = \array_shift($this->templates)) {
             $this->beginBlock('content');
+
             foreach ($this->composers as $_cname => $_cdata) {
-                if (preg_match($_cname, $_name)) {
+                if (\preg_match($_cname, $_name)) {
                     foreach ($_cdata as $_citem) {
-                        extract((is_callable($_citem) ? $_citem($this) : $_citem) ?: []);
+                        \extract((\is_callable($_citem) ? $_citem($this) : $_citem) ?: []);
                     }
                 }
             }
+
             require($this->prepare($_name));
+
             $this->endBlock(true);
         }
+
         return $this->block('content');
     }
 
@@ -105,7 +113,7 @@ class PhpEngine
      */
     public function exists($name)
     {
-        return file_exists($this->prepare($name));
+        return \file_exists($this->prepare($name));
     }
 
     /**
@@ -125,7 +133,7 @@ class PhpEngine
      */
     protected function block($name, $default = '')
     {
-        return array_key_exists($name, $this->blocks)
+        return \array_key_exists($name, $this->blocks)
             ? $this->blocks[$name]
             : $default;
     }
@@ -136,8 +144,8 @@ class PhpEngine
      */
     protected function beginBlock($name)
     {
-        array_push($this->blockStack, $name);
-        ob_start();
+        \array_push($this->blockStack, $name);
+        \ob_start();
     }
 
     /**
@@ -147,12 +155,17 @@ class PhpEngine
      */
     protected function endBlock($overwrite = false)
     {
-        $name = array_pop($this->blockStack);
-        if ($overwrite || !array_key_exists($name, $this->blocks)) {
-            $this->blocks[$name] = ob_get_clean();
+        $name = \array_pop($this->blockStack);
+
+        if (
+            $overwrite
+            || ! \array_key_exists($name, $this->blocks)
+        ) {
+            $this->blocks[$name] = \ob_get_clean();
         } else {
-            $this->blocks[$name] .= ob_get_clean();
+            $this->blocks[$name] .= \ob_get_clean();
         }
+
         return $name;
     }
 }
